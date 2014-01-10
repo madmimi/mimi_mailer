@@ -3,6 +3,14 @@ module MimiMailer
     include HTTParty
     base_uri 'https://api.madmimi.com'
 
+    def self.from_address(new_address = nil)
+      if new_address.nil?
+        @from_address || MimiMailer.config.default_from_address
+      else
+        @from_address = new_address
+      end
+    end
+
     def self.deliver(*args)
       raise NotImplementedError.new("#{self.class.name}.deliver must be overridden")
     end

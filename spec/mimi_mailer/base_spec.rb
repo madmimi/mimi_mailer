@@ -217,8 +217,31 @@ describe MimiMailer::Base do
   end
 
   describe ".from_address" do
-    it "sets the from address"
-    it "returns the from address"
-    it "returns the default from address is the class doesn't have its own"
+    class MailerWithFromAddress < MimiMailer::Base
+      from_address 'tomcat@example.com'
+    end
+
+    class MailerWithOtherFromAddress < MimiMailer::Base
+      from_address 'harrycat@example.com'
+    end
+
+    class MailerWithoutFromAddress < MimiMailer::Base
+    end
+
+    let(:default_from) { 'socks@whitehouse.gov' }
+    before { MimiMailer.config.stub(default_from_address: default_from) }
+
+    it "sets and returns the configured class from address" do
+      expect(MailerWithFromAddress.from_address).to eql('tomcat@example.com')
+    end
+
+    it "returns the default from address if the class doesn't have its own" do
+      expect(MailerWithoutFromAddress.from_address).to eql(default_from)
+    end
+
+    it "does not return another class' email address" do
+      expect(MailerWithFromAddress.from_address).to eql('tomcat@example.com')
+      expect(MailerWithOtherFromAddress.from_address).to eql('harrycat@example.com')
+    end
   end
 end
