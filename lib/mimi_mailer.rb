@@ -4,6 +4,8 @@ require 'mimi_mailer/base'
 require 'mimi_mailer/configuration'
 
 module MimiMailer
+  class InvalidConfigurationError < StandardError;end
+
   extend self
 
   def configure

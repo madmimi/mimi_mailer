@@ -32,6 +32,13 @@ describe MimiMailer::Base do
       subject.stub(from_address: default_from)
     end
 
+    it "raises an error if the config is not valid" do
+      MimiMailer.config.stub(valid?: false)
+      expect {
+        subject.mail(promotion_name, email_subject, to_address, body)
+      }.to raise_error(MimiMailer::InvalidConfigurationError)
+    end
+
     it "posts to the correct API endpoint" do
       subject.mail(promotion_name, email_subject, to_address, body)
       expect(a_request(:post, "https://api.madmimi.com/mailer")).to have_been_requested
@@ -105,7 +112,6 @@ describe MimiMailer::Base do
     end
 
     context "when deliveries are disabled" do
-
       before { MimiMailer.stub(deliveries_enabled?: false) }
 
       it "does not post anything" do
@@ -133,6 +139,13 @@ describe MimiMailer::Base do
         username: username, api_key: api_key, default_from_address: default_from)
       MimiMailer.stub(deliveries_enabled?: true)
       subject.stub(from_address: default_from)
+    end
+
+    it "raises an error if the config is not valid" do
+      MimiMailer.config.stub(valid?: false)
+      expect {
+        subject.mail_plain_text(promotion_name, email_subject, to_address, body)
+      }.to raise_error(MimiMailer::InvalidConfigurationError)
     end
 
     it "posts to the correct API endpoint" do
@@ -229,6 +242,7 @@ describe MimiMailer::Base do
     end
 
     let(:default_from) { 'socks@whitehouse.gov' }
+
     before { MimiMailer.config.stub(default_from_address: default_from) }
 
     it "sets and returns the configured class from address" do
@@ -242,6 +256,13 @@ describe MimiMailer::Base do
     it "does not return another class' email address" do
       expect(MailerWithFromAddress.from_address).to eql('tomcat@example.com')
       expect(MailerWithOtherFromAddress.from_address).to eql('harrycat@example.com')
+    end
+
+    it "returns the username if default_from_address is not configured" do
+      username = "kittycat@example.com"
+      MimiMailer.config.unstub(:default_from_address)
+      MimiMailer.config.stub(username: username)
+      expect(MailerWithoutFromAddress.from_address).to eql(username)
     end
   end
 end

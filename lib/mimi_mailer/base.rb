@@ -5,7 +5,7 @@ module MimiMailer
 
     def self.from_address(new_address = nil)
       if new_address.nil?
-        @from_address || MimiMailer.config.default_from_address
+        @from_address || MimiMailer.config.default_from_address || MimiMailer.config.username
       else
         @from_address = new_address
       end
@@ -17,6 +17,8 @@ module MimiMailer
 
     def self.mail(promotion_name, subject, to_address, body = {})
       if MimiMailer.deliveries_enabled?
+        check_config!
+
         response = post('/mailer', body: {
           username:       MimiMailer.config.username,
           api_key:        MimiMailer.config.api_key,
@@ -26,13 +28,15 @@ module MimiMailer
           promotion_name: promotion_name,
           body:           body.to_yaml
         })
-        transaction_id = response.body.to_i
-        transaction_id
+        
+        response.body.to_i
       end
     end
 
     def self.mail_plain_text(promotion_name, subject, to_address, body)
       if MimiMailer.deliveries_enabled?
+        check_config!
+        
         response = post('/mailer', body: {
           username:       MimiMailer.config.username,
           api_key:        MimiMailer.config.api_key,
@@ -42,9 +46,15 @@ module MimiMailer
           promotion_name: promotion_name,
           raw_plain_text: body
         })
-        transaction_id = response.body.to_i
-        transaction_id
+        
+        response.body.to_i
       end
+    end
+
+
+  protected
+    def self.check_config!
+      raise MimiMailer::InvalidConfigurationError unless MimiMailer.config.valid?
     end
   end
 end

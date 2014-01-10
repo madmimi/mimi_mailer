@@ -34,14 +34,14 @@ MimiMailer.configure do |config|
 end
 ```
 
-Then, create a mailer class that subclasses `MimiMailer::Base`
+Then, create a mailer class that subclasses `MimiMailer::Base` and implements a delivery method like so:
 
 ```ruby
 class UserWelcomeMailer < MimiMailer::Base
   from_address 'someone@example.com' # A class-specific from address
 
   def self.deliver(user)
-    mail('user_welcome', '')
+    mail('promotion_name', 'subject', user.email, { name: user.name })
   end
 end
 
@@ -67,8 +67,8 @@ mail(promotion_name, subject, to_address, body)
 
 The body parameter specifies the full plain-text body for your email.
 
-## Limitations
+## Current Limitations
 
 * Only supports one recipient per mailing
-* Only one from address is supported per mailer
+* Only one from address is supported per mailer class
 * No raw HTML support
