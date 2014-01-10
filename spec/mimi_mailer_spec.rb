@@ -26,5 +26,23 @@ describe MimiMailer do
         expect(MimiMailer.config).to equal(config)
       end
     end
+
+    describe ".enable_deliveries!" do
+      it "sets MimiMailer.config.deliveries_enabled to true" do
+        MimiMailer.config.deliveries_enabled = false
+        expect {
+          MimiMailer.enable_deliveries!
+        }.to change { MimiMailer.config.deliveries_enabled }.to(true)
+      end
+    end
+
+    describe ".disable_deliveries!" do
+      it "sets MimiMailer.config.deliveries_enabled to false" do
+        MimiMailer.config.deliveries_enabled = true
+        expect {
+          MimiMailer.disable_deliveries!
+        }.to change { MimiMailer.config.deliveries_enabled }.to(false)
+      end
+    end
   end
 end

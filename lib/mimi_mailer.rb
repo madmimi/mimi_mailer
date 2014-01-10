@@ -14,4 +14,12 @@ module MimiMailer
   def config
     @config ||= MimiMailer::Configuration.new
   end
+
+  def enable_deliveries!
+    config.deliveries_enabled = true
+  end
+
+  def disable_deliveries!
+    config.deliveries_enabled = false
+  end
 end
