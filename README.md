@@ -17,3 +17,8 @@ Or install it yourself as:
 ## Usage
 
 TODO: Write usage instructions here
+
+## Limitations
+
+* Only supports one recipient per mailing
+* Only one from address is supported per mailer

@@ -14,11 +14,6 @@ describe MimiMailer do
           MimiMailer.configure(&b)
         }.to yield_with_args(MimiMailer::Configuration)
       end
-
-      describe "config object" do
-        it "supports .key = value notation"
-        it "supports [:key] = value notation"
-      end
     end
 
     describe ".config" do
