@@ -3,11 +3,32 @@ require 'spec_helper'
 describe MimiMailer do
   context 'configuration' do
     describe '.configure' do
-      it "requires a block"
-      it "passes a config object"
+      it "raises an error if a block is not supplied" do
+        expect {
+          MimiMailer.configure
+        }.to raise_error(ArgumentError)
+      end
+
+      it "yeilds a MimiMailer::Configuration object" do
+        expect { |b|
+          MimiMailer.configure(&b)
+        }.to yield_with_args(MimiMailer::Configuration)
+      end
+
       describe "config object" do
         it "supports .key = value notation"
         it "supports [:key] = value notation"
+      end
+    end
+
+    describe ".config" do
+      it "returns a MimiMailer::Configuration object" do
+        expect(MimiMailer.config).to be_a(MimiMailer::Configuration)
+      end
+
+      it "returns the same MimiMailer::Configuration object on subsequent calls" do
+        config = MimiMailer.config
+        expect(MimiMailer.config).to equal(config)
       end
     end
   end
