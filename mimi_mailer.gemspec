@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'mimi_mailer/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "Mad Mimi Mailer"
+  spec.name          = "mimi_mailer"
   spec.version       = MimiMailer::VERSION
   spec.authors       = ["Jeff Browning"]
   spec.email         = ["jeff@jkbrowning.com"]
