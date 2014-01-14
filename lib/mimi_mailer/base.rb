@@ -15,46 +15,36 @@ module MimiMailer
       raise NotImplementedError.new("#{self.class.name}.deliver must be overridden")
     end
 
-    def self.mail(promotion_name, subject, to_address, body = {})
+    def self.mail(options={})
       if MimiMailer.deliveries_enabled?
         check_config!
 
-        response = post('/mailer', body: {
-          username:       MimiMailer.config.username,
-          api_key:        MimiMailer.config.api_key,
-          recipient:      to_address,
-          subject:        subject,
-          from:           MimiMailer.config.default_from_address,
-          promotion_name: promotion_name,
-          body:           body.to_yaml
-        })
+        default_options = {
+          username:  MimiMailer.config.username,
+          api_key:   MimiMailer.config.api_key,
+          from:      from_address,
+        }
+
+        options = default_options.merge(options)
+        options[:recipient] = options.delete(:to) if options[:recipient].nil?
+        options[:body] = options[:body].to_yaml unless options[:body].nil?
+
+        options_sanity_check! options
+
+        response = post('/mailer', body: options)
         
         response.body.to_i
       end
     end
-
-    def self.mail_plain_text(promotion_name, subject, to_address, body)
-      if MimiMailer.deliveries_enabled?
-        check_config!
-        
-        response = post('/mailer', body: {
-          username:       MimiMailer.config.username,
-          api_key:        MimiMailer.config.api_key,
-          recipient:      to_address,
-          subject:        subject,
-          from:           MimiMailer.config.default_from_address,
-          promotion_name: promotion_name,
-          raw_plain_text: body
-        })
-        
-        response.body.to_i
-      end
-    end
-
 
   protected
     def self.check_config!
       raise MimiMailer::InvalidConfigurationError unless MimiMailer.config.valid?
+    end
+
+    def self.options_sanity_check!(options)
+      raise ArgumentError.new(":recipient or :to must be specified") if options[:recipient].nil?
+      raise ArgumentError.new(":promotion_name must be specified") if options[:promotion_name].nil?
     end
   end
 end
