@@ -24,4 +24,8 @@ module MimiMailer
   def disable_deliveries!
     config.deliveries_enabled = false
   end
+
+  def deliveries_enabled?
+    config.deliveries_enabled
+  end
 end

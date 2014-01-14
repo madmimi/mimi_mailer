@@ -44,5 +44,12 @@ describe MimiMailer do
         }.to change { MimiMailer.config.deliveries_enabled }.to(false)
       end
     end
+
+    describe ".deliveries_enabled?" do
+      it "defers to config.deliveries_enabled" do
+        MimiMailer.config.should_receive(:deliveries_enabled)
+        MimiMailer.deliveries_enabled?
+      end
+    end
   end
 end
