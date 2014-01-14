@@ -1,6 +1,7 @@
 *.gem
 *.rbc
 .ruby-*
+*.sublime-*
 .bundle
 .config
 .yardoc
