@@ -41,7 +41,7 @@ class UserWelcomeMailer < MimiMailer::Base
   from_address 'someone@example.com' # A class-specific from address
 
   def self.deliver(user)
-    mail('promotion_name', 'subject', user.email, { name: user.name })
+    mail(promotion_name: 'promotion_name', to: user.email, subject: "subject", body: { name: user.name })
   end
 end
 
@@ -49,26 +49,50 @@ end
 
 ### MimiMailer::Base.mail
 
-The `MimiMailer::Base.mail` method has this signature:
+`MimiMailer::Base.mail` accepts the following options:
 
 ```ruby
-mail(promotion_name, subject, to_address, body = {})
+{
+  # Required. The name of the Mad Mimi promotion you want to send
+  promotion_name: 'promotion_name',
+  
+  # Required. Who you want to send the email to. Also may be specified with :recipient.
+  to: 'someone@example.com',
+  
+  # Who you want the email to be from. If not specified, this will fall back to the
+  # class-specific from address or the configured default_from_address
+  from: 'you@example.com',
+
+  # The subject of the email
+  subject: 'A nice email',
+  
+  # Placeholders that will be merged into a composed promotion on Mad Mimi. :raw_html
+  # and/or :raw_plain_text may be specified instead (see below)
+  body: {
+    first_name: user.first_name,
+    last_name: user.last_name
+  }
+}
 ```
 
-The body hash contains keys and values that will be substituted into correspoding promotion placeholders. Please refer to our [transactional email documentation](https://madmimi.com/developer/mailer/transactional) for more info.
+The email contents can be specified using **either**:
 
-### MimiMailer::Base.mail_plain_text
+`:body`
 
-The `MimiMailer::Base.mail_plain_text` method has this signature:
+The body hash contains keys and values that will be substituted into correspoding promotion placeholders.
 
-```ruby
-mail(promotion_name, subject, to_address, body)
-```
+**or**
 
-The body parameter specifies the full plain-text body for your email.
+`:raw_html`
+
+The raw HTML body of the email. May be used in conjunction with `:raw_plain_text`.
+
+`:raw_plain_text`
+
+The raw plain text body of the email. May be used in conjunction with `:raw_html`.
+
+Please take a look at our [transactional email API guide](https://madmimi.com/developer/mailer/transactional) for more information about these and other options.
 
 ## Current Limitations
 
 * Only supports one recipient per mailing
-* Only one from address is supported per mailer class
-* No raw HTML support
