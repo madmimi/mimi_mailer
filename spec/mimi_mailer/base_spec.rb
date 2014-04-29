@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe MimiMailer::Base do
+  let(:promotion_name) { "kittens" }
+  let(:email_subject) { "omg kittens" }
+  let(:body) { { cats: "rule", dogs: "drool" } }
+  let(:username) { "cats@themansion.org" }
+  let(:api_key)  { "apikey" }
+  let(:default_from) { "catsinthecradle@themansion.com" }
+
+  subject { MimiMailer::Base }
+
   describe ".deliver" do
     class TestMailer < MimiMailer::Base; end
 
@@ -14,13 +23,8 @@ describe MimiMailer::Base do
   end
 
   describe ".mail" do
-    let(:promotion_name) { "kittens" }
-    let(:email_subject) { "omg kittens" }
     let(:to_address) { "dog@thepound.org" }
-    let(:body) { { cats: "rule", dogs: "drool" } }
-    let(:username) { "cats@themansion.org" }
-    let(:api_key)  { "apikey" }
-    let(:default_from) { "catsinthecradle@themansion.com" }
+    let(:endpoint) { "https://api.madmimi.com/mailer" }
     let(:default_options) {
       {
         promotion_name: promotion_name,
@@ -29,8 +33,6 @@ describe MimiMailer::Base do
         subject: email_subject
       }
     }
-
-    subject { MimiMailer::Base }
 
     before do
       stub_request(:post, "https://api.madmimi.com/mailer")
@@ -63,11 +65,11 @@ describe MimiMailer::Base do
 
     it "posts to the correct API endpoint" do
       subject.mail(default_options)
-      expect(a_request(:post, "https://api.madmimi.com/mailer")).to have_been_requested
+      expect(a_request(:post, endpoint)).to have_been_requested
     end
 
     it "passes in the correct the username" do
-      request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+      request = stub_request(:post, endpoint).with(
         body: hash_including(username: username))
 
       subject.mail(default_options)
@@ -75,7 +77,7 @@ describe MimiMailer::Base do
     end
 
     it "passes in the correct the api_key" do
-      request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+      request = stub_request(:post, endpoint).with(
         body: hash_including(api_key: api_key))
 
       subject.mail(default_options)
@@ -83,7 +85,7 @@ describe MimiMailer::Base do
     end
 
     it "passes in the right subject" do
-      request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+      request = stub_request(:post, endpoint).with(
         body: hash_including(subject: email_subject))
 
       subject.mail(default_options)
@@ -91,7 +93,7 @@ describe MimiMailer::Base do
     end
 
     it "passes in the right promotion name" do
-      request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+      request = stub_request(:post, endpoint).with(
         body: hash_including(promotion_name: promotion_name))
 
       subject.mail(default_options)
@@ -99,7 +101,7 @@ describe MimiMailer::Base do
     end
 
     it "passes in the right recipient" do
-      request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+      request = stub_request(:post, endpoint).with(
         body: hash_including(recipient: to_address))
 
       subject.mail(default_options)
@@ -111,8 +113,8 @@ describe MimiMailer::Base do
 
       it "passes in the yaml-converted body" do
         expected_body = body.to_yaml
-        
-        request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+
+        request = stub_request(:post, endpoint).with(
           body: hash_including(body: expected_body))
 
         subject.mail(options)
@@ -125,7 +127,7 @@ describe MimiMailer::Base do
       let(:options) { default_options.merge(raw_plain_text: raw_plain_text) }
 
       it "passes in the unmodified body" do
-        request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+        request = stub_request(:post, endpoint).with(
           body: hash_including(raw_plain_text: raw_plain_text))
 
         subject.mail(options)
@@ -138,7 +140,7 @@ describe MimiMailer::Base do
       let(:options) { default_options.merge(raw_html: raw_html) }
 
       it "passes in the unmodified body" do
-        request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+        request = stub_request(:post, endpoint).with(
           body: hash_including(raw_html: raw_html))
 
         subject.mail(options)
@@ -148,7 +150,7 @@ describe MimiMailer::Base do
 
     it "returns the Mimi transaction ID" do
       transaction_id = rand(1000)
-      stub_request(:post, "https://api.madmimi.com/mailer").to_return(
+      stub_request(:post, endpoint).to_return(
         body: transaction_id.to_s)
 
       result = subject.mail(default_options)
@@ -156,10 +158,10 @@ describe MimiMailer::Base do
     end
 
     it "passes in the right from address" do
-      request = stub_request(:post, "https://api.madmimi.com/mailer").with(
+      request = stub_request(:post, endpoint).with(
         body: hash_including(from: default_from))
 
-      result = subject.mail(default_options)
+      subject.mail(default_options)
       expect(request).to have_been_requested
     end
 
@@ -167,8 +169,171 @@ describe MimiMailer::Base do
       before { MimiMailer.stub(deliveries_enabled?: false) }
 
       it "does not post anything" do
-        request = stub_request(:post, "https://api.madmimi.com/mailer")
-        result = subject.mail(default_options)
+        request = stub_request(:post, endpoint)
+        subject.mail(default_options)
+        expect(request).to_not have_been_requested
+      end
+    end
+  end
+
+  describe ".bulk_mail" do
+    let(:audience_list) { "kittens lovers" }
+    let(:csv_file) { "email,first name,last name\ntomcat@example.com,Tom,Cat\nbigdog@example.com,Big,Dog" }
+    let(:endpoint) { "https://api.madmimi.com/mailer/to_imported_list" }
+    let(:default_options) {
+      {
+        audience_list: audience_list,
+        promotion_name: promotion_name,
+        to: csv_file,
+        from: default_from,
+        subject: email_subject
+      }
+    }
+
+    before do
+      stub_request(:post, endpoint)
+      MimiMailer.config.stub(
+        username: username, api_key: api_key, default_from_address: default_from)
+      MimiMailer.stub(deliveries_enabled?: true)
+      subject.stub(from_address: default_from)
+    end
+
+    it "raises an error if the config is not valid" do
+      MimiMailer.config.stub(valid?: false)
+      expect {
+        subject.bulk_mail(default_options)
+      }.to raise_error(MimiMailer::InvalidConfigurationError)
+    end
+
+    it "raises an error if :to is not specified" do
+      default_options.delete(:to)
+      expect {
+        subject.bulk_mail(default_options)
+      }.to raise_error(ArgumentError, /to.+specified/i)
+    end
+
+    it "raises an error if :promotion_name is not specified" do
+      default_options.delete(:promotion_name)
+      expect {
+        subject.bulk_mail(default_options)
+      }.to raise_error(ArgumentError, /promotion_name.+specified/i)
+    end
+
+    it "raises an error if :audience_list is not specified" do
+      default_options.delete(:audience_list)
+      expect {
+        subject.bulk_mail(default_options)
+      }.to raise_error(ArgumentError, /audience_list.+specified/i)
+    end
+
+    it "posts to the correct API endpoint" do
+      subject.bulk_mail(default_options)
+      expect(a_request(:post, endpoint)).to have_been_requested
+    end
+
+    it "passes in the correct the username" do
+      request = stub_request(:post, endpoint).with(
+        body: hash_including(username: username))
+
+      subject.bulk_mail(default_options)
+      expect(request).to have_been_requested
+    end
+
+    it "passes in the correct the api_key" do
+      request = stub_request(:post, endpoint).with(
+        body: hash_including(api_key: api_key))
+
+      subject.bulk_mail(default_options)
+      expect(request).to have_been_requested
+    end
+
+    it "passes in the right subject" do
+      request = stub_request(:post, endpoint).with(
+        body: hash_including(subject: email_subject))
+
+      subject.bulk_mail(default_options)
+      expect(request).to have_been_requested
+    end
+
+    it "passes in the right promotion name" do
+      request = stub_request(:post, endpoint).with(
+        body: hash_including(promotion_name: promotion_name))
+
+      subject.bulk_mail(default_options)
+      expect(request).to have_been_requested
+    end
+
+    it "passes in the right csv file" do
+      request = stub_request(:post, endpoint).with(
+        body: hash_including(csv_file: csv_file))
+
+      subject.bulk_mail(default_options)
+      expect(request).to have_been_requested
+    end
+
+    context "when it contains a :body parameter" do
+      let(:options) { default_options.merge(body: body) }
+
+      it "passes in the yaml-converted body" do
+        expected_body = body.to_yaml
+
+        request = stub_request(:post, endpoint).with(
+          body: hash_including(body: expected_body))
+
+        subject.bulk_mail(options)
+        expect(request).to have_been_requested
+      end
+    end
+
+    context "when it contains a :raw_plain_text parameter" do
+      let(:raw_plain_text) { "Cameron the cat would never miss a trick" }
+      let(:options) { default_options.merge(raw_plain_text: raw_plain_text) }
+
+      it "passes in the unmodified body" do
+        request = stub_request(:post, endpoint).with(
+          body: hash_including(raw_plain_text: raw_plain_text))
+
+        subject.bulk_mail(options)
+        expect(request).to have_been_requested
+      end
+    end
+
+    context "when it contains a :raw_html parameter" do
+      let(:raw_html) { "<h1>OMG KITTENS</h1>" }
+      let(:options) { default_options.merge(raw_html: raw_html) }
+
+      it "passes in the unmodified body" do
+        request = stub_request(:post, endpoint).with(
+          body: hash_including(raw_html: raw_html))
+
+        subject.bulk_mail(options)
+        expect(request).to have_been_requested
+      end
+    end
+
+    it "returns the Mimi transaction ID" do
+      transaction_id = rand(1000)
+      stub_request(:post, endpoint).to_return(
+        body: transaction_id.to_s)
+
+      result = subject.bulk_mail(default_options)
+      expect(result).to eql(transaction_id)
+    end
+
+    it "passes in the right from address" do
+      request = stub_request(:post, endpoint).with(
+        body: hash_including(from: default_from))
+
+      subject.bulk_mail(default_options)
+      expect(request).to have_been_requested
+    end
+
+    context "when deliveries are disabled" do
+      before { MimiMailer.stub(deliveries_enabled?: false) }
+
+      it "does not post anything" do
+        request = stub_request(:post, endpoint)
+        subject.bulk_mail(default_options)
         expect(request).to_not have_been_requested
       end
     end
